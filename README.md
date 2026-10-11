@@ -30,7 +30,7 @@
 
 在本仓库页面选择 **Code → Download ZIP**，解压到你想保存的位置。在解压后的文件夹中打开终端，确认该目录里有 `package.json`。
 
-Windows：可在文件夹空白处右键选择“在终端中打开”。不需要 Git 基础。
+Windows：可在文件夹空白处右键选择“在终端中打开”。
 
 ### 3. 只运行这一条命令
 
@@ -113,8 +113,6 @@ npm start -- --model-dir "D:\Models\RelightDesk"
 
 **这是云端服务吗？** 不是。Node 只准备文件并提供本机只读 HTTP 服务，默认只监听 `127.0.0.1`；推理在浏览器中执行，不在 Node 或云端执行。它不会把网页公开到互联网。
 
-**能部署到公网吗？** 前端和模型可静态提供，但本次一条命令面向个人本机使用。公网需 HTTPS 以使用 WebGPU，并额外处理带宽、模型静态路由及服务器配置。本仓库未自动发布公网网站或 GitHub Pages。
-
 ## Blender 用户
 
 有准确的深度与法线时，不必运行 AI。所有通道必须来自同一相机、同一分辨率。
@@ -133,29 +131,7 @@ npm start -- --model-dir "D:\Models\RelightDesk"
 
 不支持视频逐帧处理、Blender 插件、真实米制 Position 重建或窗格投影。不承诺对所有插画都达到参考视频质量。
 
-## 开发与验证
-
-```sh
-npm ci
-npm run models:download
-npm run dev -- --port 5178
-```
-
-```sh
-npm test
-npm run build
-```
-
-GitHub Actions 已配置 Windows / Linux 测试和构建；云端状态以仓库 Actions 结果为准。单元测试不等于浏览器视觉或 GPU 性能验收。
-
-- [首版 GPU 与性能记录](verification/REPORT.md)
-- [i18n / 图片外灯位记录](verification/I18N-LIGHT-POSITION.md)
-- [一键启动 / 本地模型验证](verification/DEPLOYMENT.md)
-
 ## 来源与许可
 
 参考 [Transformers.js 官方示例](https://github.com/huggingface/transformers.js-examples)的 Vite / 浏览器推理组织方式，以及[本地模型加载文档](https://huggingface.co/docs/transformers.js/v3.0.0/custom_usage)。磁盘模型管理和一键启动逻辑由本项目实现。
 
-视觉灵感：[AiDeNier 原视频](https://x.com/de_nier_ai/status/2107288975472025709)。不包含原作者源码或插画分发素材。
-
-[第三方依赖与模型许可](THIRD_PARTY_NOTICES.md)。项目源码许可证尚待仓库所有者指定；公开仓库不自动等于已授予开源许可证。
