@@ -1,8 +1,12 @@
 /// <reference lib="webworker" />
 import { env, pipeline, RawImage } from '@huggingface/transformers';
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-// Vite ships the WASM runtime with the app; only model assets are fetched externally.
+// Models are managed disk files served by our local read-only HTTP server.
+env.allowLocalModels = true;
+env.allowRemoteModels = false;
+env.localModelPath = '/models/';
+env.useBrowserCache = false;
+env.useFSCache = false;
+// Vite ships the WASM runtime with the app. No browser request to a model hub.
 env.backends.onnx.wasm!.numThreads = 1;
 let estimator: any = null;
 let currentBackend = '';
@@ -12,6 +16,8 @@ self.onmessage = (event: MessageEvent) => {
   queue = queue.then(async () => {
     try {
       if (!estimator || currentBackend !== backend) {
+        const check = await fetch('/models/onnx-community/depth-anything-v2-small/onnx/model.onnx', { method: 'HEAD', cache: 'no-store' });
+        if (!check.ok) throw new Error('本地模型文件缺失，请在项目目录运行 npm start 准备模型，或检查 --model-dir 路径。');
         if (estimator) await estimator.dispose(); estimator = null;
         const opts = { device: backend, dtype: 'fp32', progress_callback: (p: any) => self.postMessage({ type: 'progress', id, progress: p }) };
         estimator = await pipeline('depth-estimation', 'onnx-community/depth-anything-v2-small', opts as any);

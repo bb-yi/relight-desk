@@ -1,106 +1,161 @@
 # Relight Desk · 光影工作台
 
-本地、纯浏览器的单图重打光原型。AI 仅在生成深度时运行一次；灯光、法线、高光、赛璐璐和深度投影在 WebGL2 中实时计算。不生成或重画原图，不提供图片上传接口。
+**给一张图片重新打光：拖动灯光，实时查看明暗、人物内部遮挡与背景投影。**
 
-## 启动
+[English](README.en.md) · [Blender / 进阶说明](docs/ADVANCED.md) · [验证记录](verification/DEPLOYMENT.md)
 
-需要 Node.js 22.12+ 或 24、支持 WebGL2 和浮点渲染目标的现代浏览器，建议使用开启硬件加速的 Chrome / Edge。
+![工作台：图片外灯位与精确坐标](verification/i18n-outside-light-en.jpg)
 
-在 PowerShell 7 中执行：
+这是一个独立实现的本地网页工具，灵感来自 AiDeNier 的 Relight Desk 视频，并非原作者发布的软件。**不是生成式改图**：保留原图，用深度和法线实时计算光照。默认肖像是程序化算法测试场景，不代表原视频插画质量。
 
-```powershell
-Set-Location -LiteralPath 'E:\deepseek_workspace\relight-desk'
-pwsh -NoProfile -File .\start.ps1
+## 能做什么
+
+- 单张 PNG / JPEG / WebP 自动估计浮点深度，再由深度生成法线。
+- 最多 8 盏灯；图片内外拖动、X/Y/Z 精确输入、颜色、强度、范围、环绕动画。
+- 高度场光线步进投影：人物内部遮挡和背景软阴影，不是简单平移剪影。
+- 普通 / 赛璐璐模式，环境光、高光、边缘光、曝光与效果混合。
+- 原图对比、法线、深度、仅光照和阴影调试视图。
+- Blender 独立 RGB EXR / PNG 深度、法线与影响蒙版导入。
+- PNG、法线 PNG、浮点 PFM、灯光设置 JSON 导出；简体中文 / English 即时切换。
+
+## 新手快速开始
+
+### 1. 安装 Node.js
+
+安装 [Node.js 24 LTS](https://nodejs.org/)（最低 24.5）。它会一并安装 npm。安装后重新打开终端，执行 `node --version` 检查版本。
+
+推荐使用桌面 Chrome 或 Edge，并打开浏览器硬件加速。不需要 Python、CUDA、账号或付费 AI API。WebGPU 不可用时，界面可选较慢的 WASM / CPU 推理；实时画布仍需要 WebGL2。
+
+### 2. 下载并解压项目
+
+在本仓库页面选择 **Code → Download ZIP**，解压到你想保存的位置。在解压后的文件夹中打开终端，确认该目录里有 `package.json`。
+
+Windows：可在文件夹空白处右键选择“在终端中打开”。不需要 Git 基础。
+
+### 3. 只运行这一条命令
+
+```sh
+npm start
 ```
 
-打开终端打印的 `http://127.0.0.1:5178/`。脚本首次运行会执行 `npm ci`，之后无需重复安装。
+启动程序会依次：安装锁定版本的依赖 → 准备并校验约 **99 MB** 模型 → 构建网页 → 启动本地服务 → 尝试打开浏览器。
 
-```powershell
-npm.cmd test
-npm.cmd run build
-npm.cmd run preview -- --port 5179 --strictPort
+看到 `READY / 已启动` 后访问 **http://127.0.0.1:5178/**。保持终端开启；按 `Ctrl+C` 停止。以后仍执行 `npm start`，依赖和完整模型会复用。
+
+> 第一次需要联网下载依赖和模型。已经准备齐全、依赖锁文件没有改变时，后续启动无需重新从网络下载它们。不是无需安装环境的独立 EXE。
+>
+> PowerShell 如果提示 `npm.ps1` 被执行策略阻止，改用 `npm.cmd start`，无需降低系统执行策略。
+
+## 第一次使用
+
+1. 先用内置场景试试「底光」或「动画双灯」，观察手臂遮挡和墙面投影。
+2. 点击「打开图片」，再点「生成深度与法线」。这是**你的电脑**在做推理，不上传图片。
+3. 拖动灯位圆点或中央空白区，也可在右侧输入 X / Y / Z。滚轮改变高度；空格＋拖动平移图片。
+4. 调节深度强度、投影柔和度、环境光和效果混合。
+5. 点击「导出 PNG」。保存设置 JSON 可留住灯位和参数；图片/通道需另行保存。
+
+模型生成深度时才运行 AI。法线和后续拖灯由 WebGL 着色器实时计算，不会每拖一次灯就重新推理。
+
+## 模型放在哪里？会重复下载吗？
+
+现在是**普通磁盘文件，不再依赖浏览器模型缓存**：
+
+```text
+relight-desk/
+└─ models/
+   └─ onnx-community/
+      └─ depth-anything-v2-small/
+         ├─ config.json
+         ├─ preprocessor_config.json
+         └─ onnx/model.onnx
 ```
 
-`dist/` 是生产构建。通过本地 HTTP 服务打开；不要用 `file://`。没有 Python、云端推理、账号或数据库。
+- 模型：Depth Anything V2 Small ONNX，FP32。法线无需额外模型。
+- 固定上游版本、文件大小、SHA-256 见 [model-manifest.json](model-manifest.json)。
+- 每次启动校验本地文件，**完整文件直接复用，不发模型下载请求**。缺失/损坏才重新下载；已有损坏文件保留为 `.invalid-*` 备份。
+- 临时下载经完整校验后才成为正式文件。中断后重跑即可；未完成的单个文件从头下载，不宣称支持断点续传。
+- 清理浏览器缓存、换浏览器，不会删除这里的文件。浏览器仍需从本机读取权重到内存，这不是再次从互联网下载。
+- 模型没有提交到 GitHub；旧版 `transformers-cache` 不自动迁移或删除。
 
-## 使用
+### 想放到 D 盘？
 
-1. 内置场景无需下载模型，即可测试底光、投影、双灯、赛璐璐、各通道及导出。
-2. 点击「打开图片」或把 PNG / JPEG / WebP 拖到画布；点击「生成深度与法线」。
-3. 首次从 Hugging Face 下载 `onnx-community/depth-anything-v2-small` FP32 权重（约 99 MB）并缓存。WASM 运行时随应用构建提供。图片像素只在本地 Worker 中处理。
-4. 推理后拖动画布或灯光圆点移动所选灯，滚轮改变灯离画面的距离。空格＋拖动平移，画布右下角控制缩放。
-5. 默认全图参与受光和接收投影。透明区域不遮挡、不接收阴影。「影响蒙版」只控制光照结果与原图的混合，不改变几何的投影资格。
-6. 原画模式保留原有纹理，但旧阴影仍然存在。只有真正的无光照底色，才适合「无光照底色」模式。
+```sh
+npm start -- --model-dir "D:\Models\RelightDesk"
+```
 
-灯光最多 8 盏。预设会替换灯光列表，但不修改深度通道。双灯预设会启动环绕动画，可取消「自动环绕」停止。
+指定的是模型根目录，程序会在里面保留上图的 `onnx-community/depth-anything-v2-small/` 结构。以后使用同一参数即可，也可设置 `RELIGHT_MODEL_DIR` 环境变量，不需要修改源码。
 
-### 模型问题
+将现有 `models` 内的 `onnx-community` 文件夹复制到新根目录，可复用已有权重；不要只复制 ONNX 文件。启动程序会验证复制结果。
 
-- WebGPU 不存在或执行失败时，选择 WASM 重试；WASM 在本机 CPU 上运行，速度较慢。
-- 首次模型下载需要联网。下载失败会显示错误，不会使用亮度图假冒深度。
-- 更换图片或点击取消会终止当前推理 Worker；浏览器模型文件缓存仍保留。不会自动保存你的图片。
-- 推理失败不影响已有通道或内置场景。图像过大时请先缩小，导入上限为 2400 万像素，另外受 GPU 最大纹理尺寸限制。
+## 常用命令
 
-## Blender / 其他 3D 软件通道
-
-所有文件必须是同一相机、同一帧、相同宽高。尺寸不一致会拒绝导入，绝不静默拉伸。
-
-| 通道 | 格式和约定 |
+| 需求 | 命令 |
 |---|---|
-| 主图 / 底色 | PNG、JPEG、WebP；作为 sRGB 图像读取。优先使用 PNG 保留 Alpha。 |
-| 法线 PNG | 相机空间，X 向右、Y 向上、Z 朝观察者；存储为 `N * 0.5 + 0.5`，RGB 读回后解码到 -1…1。 |
-| 法线 EXR | 独立 RGB / RGBA EXR，保留原始有符号相机空间 XYZ，不做 0…1 编码。 |
-| 深度 PNG | 灰度，默认近白远黑；8 位 PNG 的精度有限，精确数据建议用 EXR。 |
-| 深度 EXR | 独立 RGB EXR，把距离或高度复制到 RGB；读取 R 通道。普通相机距离一般需要勾选「反转深度」。 |
-| 影响蒙版 | 灰度 PNG / 独立 RGB EXR，0 保持原图、1 使用重打光结果。 |
+| 正常启动 | `npm start` |
+| 指定模型目录 | `npm start -- --model-dir "D:\Models\RelightDesk"` |
+| 5178 已被占用 | `npm start -- --port 5180` |
+| 不自动打开浏览器 | `npm start -- --no-open` |
+| 只下载 / 校验模型 | `npm run models:download` |
+| 暂不下载模型，只看内置场景或导入通道 | `npm start -- --demo-only` |
+| 查看参数 | `npm start -- --help` |
 
-注意：
+`--demo-only` 仍需要网页依赖；第一次安装依赖仍需联网。没有模型时会明确提示准备模型，不用亮度图假冒 AI。
 
-- **不要把 Blender 世界空间 Normal Pass 直接当成相机空间法线。** 先用相机旋转的逆矩阵转换方向，或在材质/AOV 中输出相机空间方向；不平移法线。Blender 相机朝本地 -Z 看，面向相机的表面法线一般应为 +Z。
-- 法线和深度都是数据，不能套用 AgX、Filmic、显示变换或 sRGB 编码。法线 PNG 的 0…1 编码是线性数值映射，不是 gamma 编码。
-- 用 Color 类型输出有符号法线 EXR 时先验证是否保留负值；不要在输出前 Clamp。
-- 首版不解析多层 EXR、Cryptomatte 或 Position Pass，不重建真实相机；把这些通道提前拆成上述独立文件。
-- 深度统一作为正交视角的相对高度场。透视相机的欧氏距离不是严格的高度，可能需要自行转换/调节，不能承诺物理一致。
-- 内置精确法线与外部法线会覆盖深度派生法线；需要切回计算法线时点击「改用深度法线」。
+## 常见问题
 
-## 导出
+**下载失败怎么办？** 终端会显示具体失败文件。检查网络是否能访问 npm 和 Hugging Face，再执行同一命令。支持标准 `HTTPS_PROXY` / `HTTP_PROXY` 环境变量；不内置第三方镜像，不把代理密码写进仓库。已通过校验的文件不会重下。
 
-- **PNG**：原图分辨率，不包含灯位标记或网页 UI，使用高质量投影（全分辨率、96 步、最多 4 个面积光样本）。
-- **法线 PNG**：处理后的 XYZ 映射到 RGB，保留原图 Alpha；数据图不经过 sRGB 编码。
-- **PFM**：`Pf` 单通道 float32、小端、底向上行序。保存归一化/反转后的原始浮点深度（0…1，近白），尚未应用保边平滑和高度强度。精度不会经过 8 位图片。首版导出 PFM 但不支持直接重新导入 PFM，需在外部转成 RGB EXR。
-- **设置 JSON**：版本 1，保存灯光和参数，不包含图片。恢复设置需先加载对应原图/通道；导入时校验范围及版本。
+**浏览器无法打开？** 先等终端出现 `READY`，再打开打印的地址。端口被占用时改用 `--port 5180`；不要直接双击 `index.html` 或使用 `file://`。
 
-## 实现结构
+**没有独立显卡能用吗？** 可尝试 WASM 推理，但会慢很多；画布还要求支持浮点渲染目标的 WebGL2。低端设备性能不作保证，可先用小图测试。
 
-- `src/depth.worker.ts`：模型缓存、WebGPU / WASM 推理、浮点深度返回。
-- `src/renderer.ts` 与 `src/shaders.ts`：float32 高度缓存、保边平滑、法线、按灯分组的高度场光线步进、面积采样、深度引导滤波及线性空间合成。
-- `src/main.ts`：交互、任务取消、文件导入、参数和预设。只在需要时重画；拖灯不会重新计算模型或无关法线通道。
-- `src/demo.ts`：程序化椭球表面交点生成的测试肖像、前景手臂及接收背景，不含第三方插画。
-- `src/qa.ts`：开发环境浏览器 GPU 回读测试和基准，未被生产入口引用，不进入生产构建。
+**离线能用吗？** 依赖、模型和项目文件准备好后，可断网在本机使用。单独复制 `dist/` 不包含磁盘模型；迁移时同时保留项目与模型目录，或重新运行启动命令。
 
-### 回归检查
+**这是云端服务吗？** 不是。Node 只准备文件并提供本机只读 HTTP 服务，默认只监听 `127.0.0.1`；推理在浏览器中执行，不在 Node 或云端执行。它不会把网页公开到互联网。
 
-`npm test` 覆盖浮点深度、非方形梯度、平面与遮挡、EXR 符号和行序、PFM 编码、设置验证。真实 WebGL 检查需启动开发服务器，在本地页面开发者控制台执行：
+**能部署到公网吗？** 前端和模型可静态提供，但本次一条命令面向个人本机使用。公网需 HTTPS 以使用 WebGPU，并额外处理带宽、模型静态路由及服务器配置。本仓库未自动发布公网网站或 GitHub Pages。
 
-```js
-await (await import('/src/qa.ts')).runGPUChecks()
-await (await import('/src/qa.ts')).benchmark(1)
-await (await import('/src/qa.ts')).benchmark(8, 60)
+## Blender 用户
+
+有准确的深度与法线时，不必运行 AI。所有通道必须来自同一相机、同一分辨率。
+
+- 法线转到**相机空间**：X 右、Y 上、Z 朝观察者。
+- PNG 法线编码为 `N * 0.5 + 0.5`；RGB EXR 保留有符号 XYZ。
+- 深度用灰度 PNG 或把深度复制到 RGB 的独立 EXR。
+- 不对数据通道套用 AgX、Filmic 或 sRGB 颜色变换。
+- 首版不解析多层 EXR，也不重建真实相机空间。
+
+详见 [Blender 通道约定、导出格式与实现说明](docs/ADVANCED.md)。
+
+## 效果与限制
+
+这是固定视角 **2.5D 高度场重打光**，不是完整三维场景，也不是自动去除旧光影的生成式工具。原图已有阴影仍可能残留；看不见的几何、细发丝、透明物体和交叠肢体可能估计不准确。准确 Blender 通道通常比 AI 猜测更可靠。
+
+不支持视频逐帧处理、Blender 插件、真实米制 Position 重建或窗格投影。不承诺对所有插画都达到参考视频质量。
+
+## 开发与验证
+
+```sh
+npm ci
+npm run models:download
+npm run dev -- --port 5178
 ```
 
-GPU 测试会创建独立临时渲染器，结束后释放，不改当前图片或灯光。基准是当前浏览器的帧调度与渲染耗时，不是所有设备的性能保证。
+```sh
+npm test
+npm run build
+```
 
-## 效果边界
+GitHub Actions 已配置 Windows / Linux 测试和构建；云端状态以仓库 Actions 结果为准。单元测试不等于浏览器视觉或 GPU 性能验收。
 
-这是固定视角 2.5D 重打光，不是完整三维渲染。原图外、被挡住的表面和多层透明几何不在单层深度里。原视频画面只用于本地内部测试，没有包含在默认场景或 `dist/` 中。
+- [首版 GPU 与性能记录](verification/REPORT.md)
+- [i18n / 图片外灯位记录](verification/I18N-LIGHT-POSITION.md)
+- [一键启动 / 本地模型验证](verification/DEPLOYMENT.md)
 
-Depth Anything Small 对插画脸部、发丝、交叠肢体可能估计错误。外部准确通道可以改进效果，但不能补足看不见的几何。内置测试场景的成功不代表已经逐像素复刻原视频。
+## 来源与许可
 
-## 依赖与来源
+参考 [Transformers.js 官方示例](https://github.com/huggingface/transformers.js-examples)的 Vite / 浏览器推理组织方式，以及[本地模型加载文档](https://huggingface.co/docs/transformers.js/v3.0.0/custom_usage)。磁盘模型管理和一键启动逻辑由本项目实现。
 
-- [Three.js](https://github.com/mrdoob/three)：MIT；自定义着色器由本项目实现。
-- [Transformers.js](https://github.com/huggingface/transformers.js)：Apache-2.0。
-- [Depth Anything V2 Small ONNX](https://huggingface.co/onnx-community/depth-anything-v2-small)：模型页面标注 Apache-2.0。
-- [原视频视觉参考](https://x.com/de_nier_ai/status/2107288975472025709)：仅参考交互和视觉目标，未取得原作者源码，也未使用其品牌素材或插画作为分发资源。
+视觉灵感：[AiDeNier 原视频](https://x.com/de_nier_ai/status/2107288975472025709)。不包含原作者源码或插画分发素材。
 
-已完成和未完成的实际验证见 `verification/REPORT.md`。
+[第三方依赖与模型许可](THIRD_PARTY_NOTICES.md)。项目源码许可证尚待仓库所有者指定；公开仓库不自动等于已授予开源许可证。

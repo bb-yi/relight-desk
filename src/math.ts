@@ -25,3 +25,7 @@ export function visibility(heightAt: (x: number, y: number) => number | null, p:
   }
   return 1;
 }
+/** Image-relative coordinates deliberately remain unclamped at the image edges. */
+export function lightPositionFromUV(u: number, v: number, aspect: number): [number, number] {
+  return [clamp((u * 2 - 1) * aspect, -100, 100), clamp(1 - v * 2, -100, 100)];
+}

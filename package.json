@@ -1,6 +1,7 @@
 {
   "name": "relight-desk", "private": true, "version": "0.1.0", "type": "module",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "tsc --noEmit && vite build", "preview": "vite preview --host 127.0.0.1", "test": "vitest run" },
+  "engines": { "node": ">=24.5.0" },
+  "scripts": { "start": "node start.mjs", "models:download": "node start.mjs --models-only", "dev": "vite --host 127.0.0.1", "build": "tsc --noEmit && vite build", "preview": "vite preview --host 127.0.0.1", "test": "vitest run" },
   "dependencies": { "@huggingface/transformers": "3.8.1", "three": "0.180.0" },
   "devDependencies": { "@types/three": "0.180.0", "typescript": "~5.9.3", "vite": "^7.1.9", "vitest": "^3.2.4" }
 }

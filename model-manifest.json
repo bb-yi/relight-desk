@@ -1,0 +1,10 @@
+{
+  "id": "onnx-community/depth-anything-v2-small",
+  "revision": "4472b7362082ad9968fee890ca0f1e5aca36b93d",
+  "license": "Apache-2.0",
+  "files": [
+    { "path": "config.json", "size": 38, "sha256": "3aee5b9bc4f711ee885c2526d871f0c8c6c8c4b26b8e04253d0167f6a83264f5" },
+    { "path": "preprocessor_config.json", "size": 461, "sha256": "03576db3c13dd0471fdf5f5e1428befcb95de063fe699879150b293dc9e0a2c6" },
+    { "path": "onnx/model.onnx", "size": 99060839, "sha256": "afb6a5c28f3b6bf1618c6e43f02073ef9dfdc70e937502d51603e57b0a1df10c" }
+  ]
+}

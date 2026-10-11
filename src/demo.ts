@@ -59,5 +59,5 @@ export function createDemo(width = 1024, height = 1536): Channels {
     for (let a = 0; a < 3; a++) { color[k * 4 + a] = clamp(c[a] + grain, 0, 255); normal[k * 3 + a] = n[a]; }
     color[k * 4 + 3] = 255; depth[k] = z / .5;
   }
-  return { width, height, color, depth, normal, source: 'demo', name: '静物 01 · 玉色肖像' };
+  return { width, height, color, depth, normal, source: 'demo', name: '静物 01 · 玉色肖像', nameKey: '静物 01 · 玉色肖像' };
 }

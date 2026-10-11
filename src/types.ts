@@ -1,3 +1,4 @@
+import { t } from './i18n';
 export type Vec3 = [number, number, number];
 export type View = 'lit' | 'compare' | 'original' | 'normal' | 'depth' | 'lighting' | 'shadow';
 export interface Light { id: number; name: string; position: Vec3; color: string; intensity: number; range: number; enabled: boolean }
@@ -12,6 +13,7 @@ export interface Settings {
 export interface Channels {
   width: number; height: number; color: Uint8ClampedArray; depth: Float32Array;
   normal?: Float32Array; mask?: Float32Array; source: 'demo' | 'ai' | 'external' | 'pending'; name: string;
+  nameKey?: string; // Only built-in assets have translatable names; filenames remain verbatim.
 }
 export const defaults = (): Settings => ({
   view: 'lit', comparison: .5, toon: false, baseMode: false, mix: 1,
@@ -23,6 +25,6 @@ export const defaults = (): Settings => ({
 });
 export const makeLight = (id: number, position: Vec3 = [-.6, .65, 1.6]): Light => ({ id, name: `光源 ${id}`, position, color: '#fff0d8', intensity: 1.8, range: 3, enabled: true });
 export function validateSize(w: number, h: number, source: Pick<Channels, 'width' | 'height'>) {
-  if (w !== source.width || h !== source.height) throw new Error(`通道尺寸 ${w}×${h} 与原图 ${source.width}×${source.height} 不一致；请从同一相机以相同分辨率导出。`);
+  if (w !== source.width || h !== source.height) throw new Error(t("通道尺寸 {0}×{1} 与原图 {2}×{3} 不一致；请从同一相机以相同分辨率导出。", w, h, source.width, source.height));
 }
 export interface SettingsFile { version: 1; settings: Settings; lights: Light[] }

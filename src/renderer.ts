@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import * as T from 'three';
 import type { Channels, Light, Settings, View } from './types';
 import { normalizeDepth } from './math';
@@ -30,7 +31,7 @@ export class RelightRenderer {
     this.renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = T.LinearSRGBColorSpace;
     this.renderer.setPixelRatio(1); this.renderer.setClearColor(0, 0);
-    if (!this.renderer.extensions.has('EXT_color_buffer_float')) throw new Error('需要支持浮点渲染目标的 WebGL2 显卡；请启用浏览器硬件加速。');
+    if (!this.renderer.extensions.has('EXT_color_buffer_float')) throw new Error(t('需要支持浮点渲染目标的 WebGL2 显卡；请启用浏览器硬件加速。'));
     this.renderer.debug.onShaderError = (gl, program, vs, fs) => {
       this.error = `${gl.getProgramInfoLog(program)}\n${gl.getShaderInfoLog(vs)}\n${gl.getShaderInfoLog(fs)}`;
       console.error('Relight shader error', this.error);
@@ -133,7 +134,7 @@ export class RelightRenderer {
       for (let y = 0; y < height; y++) out.set(bytes.subarray(y * width * 4, (y + 1) * width * 4), (height - 1 - y) * width * 4);
       const canvas = document.createElement('canvas');canvas.width = width;canvas.height = height;
       canvas.getContext('2d')!.putImageData(new ImageData(out, width, height), 0, 0);
-      return await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('PNG 编码失败')), 'image/png'));
+      return await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error(t('PNG 编码失败'))), 'image/png'));
     } finally { this.exportTarget.dispose();this.exportTarget = undefined;this.shadowDirty = true;this.renderer.setRenderTarget(null); }
   }
   dispose() { for (const t of [...this.maps, ...this.targets]) t.dispose(); for (const m of [this.depthMat, this.normalMat, this.shadowMat, this.blurMat, this.lightingMat]) m.dispose();this.quad.geometry.dispose();this.renderer.dispose(); }

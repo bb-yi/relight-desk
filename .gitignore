@@ -3,3 +3,8 @@ dist/
 .cache/
 test-results/
 *.log
+models/
+.env
+.env.*
+!.env.example
+*.partial-*
