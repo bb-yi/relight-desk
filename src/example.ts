@@ -1,7 +1,13 @@
 import manifest from '../public/example/manifest.json';
-import { readImage, readChannel } from './io';
+import savedSettings from '../public/example/settings.json';
+import { readImage, readChannel, parseSettings } from './io';
 import { t } from './i18n';
 import type { Channels, Settings } from './types';
+
+// Parse afresh: editing a light's nested position array must not change the defaults.
+export function exampleSettings() {
+  return parseSettings(JSON.stringify(savedSettings));
+}
 
 export function decodeExampleDepth(buffer: ArrayBuffer, width: number, height: number) {
   if (buffer.byteLength !== width * height * 4) throw new Error(t('示例深度文件尺寸不匹配。'));

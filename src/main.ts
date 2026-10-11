@@ -1,7 +1,7 @@
 import { t, bindStatic, localizedText, getLocale, setLocale, onLocaleChange, lightName, type Locale } from './i18n';
 import './style.css';
 import { createDemo } from './demo';
-import { loadExample } from './example';
+import { loadExample, exampleSettings } from './example';
 import { RelightRenderer } from './renderer';
 import { defaults, makeLight, type Channels, type Light, type Settings, type View } from './types';
 import { clamp, normalizeDepth, lightPositionFromUV } from './math';
@@ -168,7 +168,11 @@ $('add-light').onclick = () => { if (lights.length >= 8) return;selected = Math.
 $('delete-light').onclick = () => { if (lights.length <= 1) return;lights = lights.filter(l => l.id !== selected);selected = lights[0].id;change();sync(); };
 $('toggle-light').onclick = () => { selectedLight().enabled = !selectedLight().enabled;change();sync(); };
 $<HTMLInputElement>('animate').onchange = e => { animate = (e.target as HTMLInputElement).checked;change(); };
-$('reset').onclick = () => { settings = defaults();if (channels.source === 'pending') settings.view = 'original';lights = [makeLight(1)];selected = 1;animate = false;change(true);sync(); };
+$('reset').onclick = () => {
+  const initial = channels.source === 'bundled' ? exampleSettings() : { settings: defaults(), lights: [makeLight(1)] };
+  settings = initial.settings;lights = initial.lights;if (channels.source === 'pending') settings.view = 'original';
+  selected = lights[0].id;animate = false;change(true);sync();
+};
 $('zoom-in').onclick = () => { zoom = Math.min(4, zoom * 1.2);fit(); };$('zoom-out').onclick = () => { zoom = Math.max(.25, zoom / 1.2);fit(); };$('fit').onclick = () => { zoom = 1;pan = { x: 0, y: 0 };fit(); };
 document.addEventListener('keydown', e => { if (e.code === 'Space' && !['INPUT','SELECT','TEXTAREA','BUTTON'].includes((e.target as HTMLElement).tagName)) { space = true;e.preventDefault(); } });
 document.addEventListener('keyup', e => { if (e.code === 'Space') space = false; });
@@ -205,7 +209,7 @@ async function openExample() {
   status(() => t('正在加载默认示例与预置通道…'));
   try {
     const next = await loadExample(controller.signal);if (request !== jobId) return;
-    settings=defaults();lights=[makeLight(1)];selected=1;animate=false;backendLabel=()=>t('预置通道 · 无需推理');
+    const initial=exampleSettings();settings=initial.settings;lights=initial.lights;selected=lights[0].id;animate=false;backendLabel=()=>t('预置通道 · 无需推理');
     loadChannels(next);status(() => t('默认示例已就绪 · 深度与法线已附带，直接拖灯'));
   } catch(error) {
     if (request !== jobId || controller.signal.aborted) return;

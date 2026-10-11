@@ -30,6 +30,8 @@ The default illustration ships with precomputed AI depth and normals: drag a lig
 
 Opening the example does not request model weights. Use `npm start -- --demo-only` to skip downloading weights as well. Other images still require the model or imported passes. The manifest records hashes and bake settings. Maintainers can regenerate with `node scripts/bake-example.mjs "source.png"` after preparing the local model.
 
+`public/example/settings.json` stores the maintainer-tuned pink-purple fill, warm key light and complete render settings. Opening/restoring the default example or resetting its lights restores this configuration; other images and the procedural test scene keep their generic defaults.
+
 The illustration was supplied by the project maintainer; no new artwork license is granted by its inclusion. Check the original rights holder's permission before redistribution or commercial use. See [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Model management

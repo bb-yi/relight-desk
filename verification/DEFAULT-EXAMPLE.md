@@ -16,3 +16,12 @@ Verified on Windows, 2026-10-11. Source supplied by the project maintainer: `142
 The bake script clones the image before model preprocessing, which converts its input from RGBA to RGB in place. This avoids corrupting later edge-aware filtering. The normal integrity test covers the whole image to catch truncated/black lower rows.
 
 These are estimated illustration passes, not Blender ground truth. No new performance benchmark or claim of parity with the reference video is made. Artwork authorship/redistribution permission has not been independently verified; see `THIRD_PARTY_NOTICES.md`.
+
+## Maintainer-authored default lighting (2026-10-11)
+
+- Captured the live page's **Save settings** export before changing or refreshing anything. Stored its complete version-1 settings and both lights in `public/example/settings.json`, preserving full position precision.
+- The pink-purple fill (`#fed6ff`, intensity 0.62) and warm key (`#e1bd84`, intensity 1.17), plus feather 0.117 and all other parameters, now apply when the example opens or its lighting is reset. Generic defaults remain unchanged.
+- **34/34 tests passed**, including exact default values and isolation from subsequent edits; production build passed.
+- Verified a separate production tab, leaving the original adjusted tab intact. Fresh startup and refresh showed both lights. Changed light X to 2, pressed Reset, exported settings: parsed JSON matched the original captured settings exactly.
+- Compared the original adjusted PNG export and the fresh-default PNG export at 1053×1536: **0 changed RGBA channels, maximum error 0/255**. Browser warning/error log was empty.
+- Updated `default-example.png` to the verified dual-light default.

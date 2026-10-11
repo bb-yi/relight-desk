@@ -2,12 +2,27 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { RawImage } from '@huggingface/transformers';
-import { decodeExampleDepth, useBakedNormal } from '../src/example';
+import { decodeExampleDepth, useBakedNormal, exampleSettings } from '../src/example';
 import { defaults, type Channels } from '../src/types';
 import manifest from '../public/example/manifest.json';
 
 const asset = (name: string) => readFileSync(`public/example/${name}`);
 describe('bundled illustration', () => {
+  it('restores the owner-authored dual-light settings without rounding positions', () => {
+    const config = exampleSettings();
+    expect(config.lights).toHaveLength(2);
+    expect(config.lights[0]).toMatchObject({ position: [-0.5455302492990204, -0.49313621964097143, 1.6], color: '#fed6ff', intensity: .62, enabled: true });
+    expect(config.lights[1]).toMatchObject({ position: [.7560996786174156, .706441393875396, 1.4], color: '#e1bd84', intensity: 1.17, enabled: true });
+    expect(config.settings.feather).toBe(.117);
+    expect(config.settings.shadows).toBe(true);
+    expect(config).toEqual(JSON.parse(asset('settings.json').toString('utf8')));
+  });
+  it('never mutates stored example settings or generic defaults during editing', () => {
+    const first = exampleSettings();first.lights[0].position[0] = 99;first.settings.feather = .4;first.lights.pop();
+    const restored = exampleSettings();
+    expect(restored.lights).toHaveLength(2);expect(restored.lights[0].position[0]).toBe(-.5455302492990204);
+    expect(restored.settings.feather).toBe(.117);expect(defaults().feather).toBe(.08);
+  });
   it('ships every asset with matching bytes and SHA256', () => {
     for (const [name, expected] of Object.entries(manifest.files)) {
       const bytes = asset(name);

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "settings": {
+    "view": "lit",
+    "comparison": 0.5,
+    "toon": false,
+    "baseMode": false,
+    "mix": 1,
+    "ambient": 0.42,
+    "ambientColor": "#b4bddc",
+    "wrap": 0.2,
+    "threshold": 0.18,
+    "feather": 0.117,
+    "shadows": true,
+    "bias": 0.007,
+    "softness": 0.035,
+    "specular": 0.13,
+    "shininess": 60,
+    "rim": 0.18,
+    "exposure": 0,
+    "height": 0.65,
+    "invert": false,
+    "smooth": 1,
+    "lineAssist": true,
+    "normalStrength": 1,
+    "flipX": false,
+    "flipY": false,
+    "flipZ": false,
+    "depthMin": 0,
+    "depthMax": 1,
+    "autoDepthRange": true
+  },
+  "lights": [
+    {
+      "id": 1,
+      "name": "光源 1",
+      "position": [-0.5455302492990204, -0.49313621964097143, 1.6],
+      "color": "#fed6ff",
+      "intensity": 0.62,
+      "range": 3,
+      "enabled": true
+    },
+    {
+      "id": 2,
+      "name": "光源 2",
+      "position": [0.7560996786174156, 0.706441393875396, 1.4],
+      "color": "#e1bd84",
+      "intensity": 1.17,
+      "range": 3,
+      "enabled": true
+    }
+  ]
+}
