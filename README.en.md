@@ -18,6 +18,8 @@ npm start
 
 The launcher installs locked dependencies, downloads and verifies about 99 MB of model files, builds the app, and starts a read-only local server at **http://127.0.0.1:5178/**. Keep the terminal open; Ctrl+C stops it. Use `npm.cmd start` if PowerShell blocks `npm.ps1`.
 
+On Windows you can instead **double-click `start.bat`** in the project folder. It locates the project automatically and runs the same launcher, keeping error messages visible if Node.js is missing or startup fails. Keep its window open while using the app.
+
 First-time setup needs internet. Later starts reuse verified models and installed dependencies if the lockfile is unchanged. No Python, CUDA toolkit, account, or paid API is required. Inference uses browser WebGPU or slower WASM/CPU; rendering requires WebGL2 with floating-point targets.
 
 ## Use

@@ -1,2 +1,3 @@
 # Float depth is binary on every platform; never normalize its byte order/line endings.
 *.f32 binary
+*.bat text eol=crlf
