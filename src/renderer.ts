@@ -48,7 +48,7 @@ export class RelightRenderer {
     this.normalMat = material(normalFragment, { inputNormal: null, hasNormal: false, flips: new T.Vector3(1, 1, 1), normalStrength: 1 });
     this.shadowMat = material(shadowFragment, { groupIndex: 0, marchSteps: 48, areaSamples: 1, bias: .007, softness: .035, shadowsEnabled: true });
     this.blurMat = material(blurFragment, { shadowMap: null, shadowSize: new T.Vector2(1, 1), softness: .035 });
-    this.lightingMat = material(lightingFragment, { normalMap: null, maskMap: null, shadows0: null, shadows1: null, ambient: .4, ambientColor: new T.Color(), wrapLight: .2, threshold: .18, feather: .08, specular: .13, shininess: 60, rim: .18, exposure: 0, effectMix: 1, comparison: .5, toon: false, baseMode: false, viewMode: 0 });
+    this.lightingMat = material(lightingFragment, { linearColorMap: null, hasLinearColor: false, normalMap: null, maskMap: null, shadows0: null, shadows1: null, ambient: .4, ambientColor: new T.Color(), wrapLight: .2, threshold: .18, feather: .08, specular: .13, shininess: 60, rim: .18, exposure: 0, effectMix: 1, comparison: .5, toon: false, baseMode: false, viewMode: 0 });
   }
   load(channels: Channels) {
     for (const t of this.maps) t.dispose(); for (const t of this.targets) t.dispose();
@@ -59,6 +59,10 @@ export class RelightRenderer {
     const mask = channels.mask ?? new Float32Array(w * h).fill(1);
     this.maps = [texture(channels.color, w, h), texture(normalizeDepth(channels.depth), w, h, T.RedFormat, T.FloatType), texture(rgbaNormal, w, h, T.RGBAFormat, T.FloatType), texture(mask, w, h, T.RedFormat, T.FloatType)];
     this.shared.colorMap.value = this.maps[0]; this.shared.imageSize.value.set(w, h);
+    const hdr = channels.linearColor ? texture(channels.linearColor, w, h, T.RGBAFormat, T.FloatType) : this.maps[0];
+    if (channels.linearColor) this.maps.push(hdr);
+    this.lightingMat.uniforms.linearColorMap.value = hdr;
+    this.lightingMat.uniforms.hasLinearColor.value = !!channels.linearColor;
     this.depthMat.uniforms.rawDepth.value = this.maps[1];
     this.normalMat.uniforms.inputNormal.value = this.maps[2]; this.normalMat.uniforms.hasNormal.value = !!channels.normal;
     this.lightingMat.uniforms.maskMap.value = this.maps[3];

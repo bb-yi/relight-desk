@@ -54,6 +54,8 @@ Depth Anything V2 Small FP32 estimates relative depth. Normals are derived using
 
 ## Blender and limitations
 
+**Open image** and drag/drop accept standalone RGB/RGBA EXR (half/float). Images are interpreted as linear sRGB/Rec.709 with straight alpha. Float HDR data is preserved for lighting; AI uses an 8-bit sRGB preview. Display/PNG output is SDR and clips out-of-range values; lowering exposure in the lit view recovers HDR highlights. No Blender AgX/Filmic or ACES conversion is applied. Export multilayer/Deep EXR passes separately. Depth/normal EXRs still use their dedicated data-channel import without color conversion. EXR export is not included.
+
 Import matching-resolution camera-space normals and relative depth as PNG or standalone RGB EXR. X right, Y up, Z toward the viewer. Do not apply color transforms to data. Multilayer EXR is unsupported. See the [advanced guide](docs/ADVANCED.md).
 
 This is fixed-view 2.5D relighting, not full 3D reconstruction. Existing baked lighting is not removed. Hidden geometry, hair and illustrations may have inaccurate estimated depth. The procedural demo is not proof of parity with the reference artwork.

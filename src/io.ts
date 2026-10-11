@@ -4,8 +4,30 @@ import { FloatType } from 'three';
 import type { Channels, Light, Settings, SettingsFile } from './types';
 import { defaults, validateSize } from './types';
 
-export async function readImage(file: File) {
-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error(t('主图仅支持 PNG、JPEG、WebP。'));
+export interface ImagePixels { width: number; height: number; data: Uint8ClampedArray; linearColor?: Float32Array }
+export function decodeEXRImage(buffer: ArrayBuffer): ImagePixels {
+  let map;
+  try { map = new EXRLoader().setDataType(FloatType).parse(buffer); }
+  catch { throw new Error(t('EXR 读取失败：请导出独立 RGB/RGBA OpenEXR，不要使用多层或 Deep EXR。')); }
+  const { width, height } = map;
+  if (width * height > 24_000_000) throw new Error(t('图片超过 2400 万像素，请先缩小后导入。'));
+  const raw = map.data as Float32Array, stride = raw.length / (width * height);
+  if (stride !== 4) throw new Error(t('EXR 读取失败：请导出独立 RGB/RGBA OpenEXR，不要使用多层或 Deep EXR。'));
+  const linearColor = new Float32Array(raw.length), data = new Uint8ClampedArray(raw.length);
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) for (let k = 0; k < 4; k++) {
+    const index = (y * width + x) * 4 + k;
+    const sample = raw[((height - 1 - y) * width + x) * 4 + k];
+    const value = Number.isFinite(sample) ? sample : 0;
+    linearColor[index] = k === 3 ? Math.max(0, Math.min(1, value)) : value;
+    // Only the AI/edge-guide preview is quantized; rendering keeps the original HDR RGB.
+    const display = Math.max(0, Math.min(1, value));
+    data[index] = 255 * (k === 3 ? display : display <= .0031308 ? display * 12.92 : 1.055 * display ** (1 / 2.4) - .055);
+  }
+  return { width, height, data, linearColor };
+}
+export async function readImage(file: File): Promise<ImagePixels> {
+  if (/\.exr$/i.test(file.name)) return decodeEXRImage(await file.arrayBuffer());
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error(t('主图支持 PNG、JPEG、WebP 和独立 RGB/RGBA EXR。'));
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image', premultiplyAlpha: 'none' });
   try {
     if (bitmap.width * bitmap.height > 24_000_000) throw new Error(t('图片超过 2400 万像素，请先缩小后导入。'));

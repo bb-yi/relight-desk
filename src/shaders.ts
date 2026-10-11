@@ -125,6 +125,8 @@ void main(){
 `;
 export const lightingFragment = common + lightUniforms + /* glsl */`
 uniform sampler2D normalMap;
+uniform sampler2D linearColorMap;
+uniform bool hasLinearColor;
 uniform sampler2D maskMap;
 uniform sampler2D shadows0;
 uniform sampler2D shadows1;
@@ -133,7 +135,7 @@ uniform vec3 ambientColor;
 uniform bool toon,baseMode;
 uniform int viewMode;
 void main(){
-  vec4 src=texture2D(colorMap,vUv);vec3 base=linearize(src.rgb);
+  vec4 src=texture2D(colorMap,vUv);vec3 base=hasLinearColor?texture2D(linearColorMap,vUv).rgb:linearize(src.rgb);
   vec3 n=normalize(texture2D(normalMap,vUv).xyz*2.-1.),p=positionAt(vUv);
   vec3 direct=vec3(0), highlights=vec3(0);float visibleTotal=0.,lightWeight=0.;
   vec4 a=texture2D(shadows0,vUv),b=texture2D(shadows1,vUv);

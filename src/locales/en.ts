@@ -1,5 +1,8 @@
 // Chinese source strings are stable message IDs. Keep placeholders identical.
 export const en: Record<string, string> = {
+  '主图支持 PNG、JPEG、WebP 和独立 RGB/RGBA EXR。': 'Images support PNG, JPEG, WebP and standalone RGB/RGBA EXR.',
+  'EXR 读取失败：请导出独立 RGB/RGBA OpenEXR，不要使用多层或 Deep EXR。': 'Could not read EXR. Export standalone RGB/RGBA OpenEXR, not multilayer or Deep EXR.',
+  'EXR 已加载 · 保留线性 HDR；生成或导入深度后可打光（不是 Blender AgX 显示）': 'EXR loaded · Linear HDR preserved; generate/import depth to relight (not Blender AgX display)',
   '默认示例': 'Default example', '测试场景': 'Test scene',
   '预置 AI 深度＋法线': 'Bundled AI depth + normals', '预置通道 · 无需推理': 'Bundled passes · No inference',
   '正在加载默认示例与预置通道…': 'Loading default example and bundled passes…',

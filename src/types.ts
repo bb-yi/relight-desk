@@ -12,6 +12,7 @@ export interface Settings {
 }
 export interface Channels {
   width: number; height: number; color: Uint8ClampedArray; depth: Float32Array;
+  linearColor?: Float32Array; // Optional scene-linear HDR RGBA; color remains the AI preview.
   normal?: Float32Array; mask?: Float32Array; source: 'demo' | 'bundled' | 'ai' | 'external' | 'pending'; name: string;
   normalBasis?: { height: number; smooth: number; lineAssist: boolean };
   nameKey?: string; // Only built-in assets have translatable names; filenames remain verbatim.
