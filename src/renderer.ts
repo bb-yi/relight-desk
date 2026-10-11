@@ -2,6 +2,7 @@ import { t } from './i18n';
 import * as T from 'three';
 import type { Channels, Light, Settings, View } from './types';
 import { normalizeDepth } from './math';
+import { useBakedNormal } from './example';
 import { vertex, depthFragment, normalFragment, shadowFragment, blurFragment, lightingFragment } from './shaders';
 
 function texture(data: Uint8ClampedArray | Float32Array, w: number, h: number, format: T.PixelFormat = T.RGBAFormat, type: T.TextureDataType = T.UnsignedByteType) {
@@ -95,6 +96,7 @@ export class RelightRenderer {
       this.shared.lightRange.value[i] = lights[i].range;
     }
     if (this.channelDirty) {
+      this.normalMat.uniforms.hasNormal.value = useBakedNormal(this.channels, s);
       this.depthMat.uniforms.smoothing.value = s.smooth;this.depthMat.uniforms.lineAssist.value = s.lineAssist;
       this.pass(this.depthMat, this.depthRT);
       this.normalMat.uniforms.normalStrength.value = s.normalStrength;

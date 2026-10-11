@@ -1,6 +1,7 @@
 import { t, bindStatic, localizedText, getLocale, setLocale, onLocaleChange, lightName, type Locale } from './i18n';
 import './style.css';
 import { createDemo } from './demo';
+import { loadExample } from './example';
 import { RelightRenderer } from './renderer';
 import { defaults, makeLight, type Channels, type Light, type Settings, type View } from './types';
 import { clamp, normalizeDepth, lightPositionFromUV } from './math';
@@ -9,7 +10,7 @@ import { preset, presetNames } from './presets';
 
 document.querySelector('#app')!.innerHTML = `
 <header class="topbar"><div class="brand"><span class="brand-icon">◒</span><div><h1>Relight <em>Desk</em></h1><span class="edition">光影工作台 / LOCAL EDITION</span></div></div>
-<div class="top-actions"><button id="demo" class="quiet">内置场景</button><button id="open-image">↗ 打开图片</button><button id="export-png" class="primary">导出 PNG <span>↓</span></button></div></header>
+<div class="top-actions"><button id="example" class="quiet">默认示例</button><button id="demo" class="quiet">测试场景</button><button id="open-image">↗ 打开图片</button><button id="export-png" class="primary">导出 PNG <span>↓</span></button></div></header>
 <main><section class="workspace"><nav class="views" aria-label="查看通道">${[['lit', '光照'], ['compare', '对比'], ['original', '原图'], ['normal', '法线'], ['depth', '深度'], ['lighting', '仅光照'], ['shadow', '阴影']].map(([id, label]) => `<button data-view="${id}" class="${id === 'lit' ? 'active' : ''}">${label}</button>`).join('')}</nav>
 <div class="canvas-area" id="canvas-area"><div class="canvas-caption"><span id="asset-name"></span><span id="source-label"></span></div><div class="paper" id="paper"><canvas id="canvas" aria-label="实时重打光画布"></canvas><div id="light-markers"></div><div id="compare-line"><button aria-label="拖动原图对比线">↔</button></div><div class="corner-label">RELIGHT / 01</div></div><div id="empty-hint" hidden>已载入原图。生成或导入深度后，即可开始重打光。</div><div class="zoom-tools"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="放大">＋</button><button id="fit">适应</button></div></div>
 <div class="canvas-help"><span><i class="cyan-dot"></i> 拖动 · 移动光源 <b> / </b> 滚轮 · 灯光高度 <b> / </b> 空格＋拖动 · 平移</span><button id="help">使用说明 ↗</button></div>
@@ -39,6 +40,7 @@ let settings = defaults(), lights: Light[] = [makeLight(1)], selected = 1;
 let channels: Channels, renderer: RelightRenderer;
 let dirty = true, interactUntil = 0, previousInteractive = false, animate = false, jobId = 0;
 let worker: Worker | null = null, busy = false, backendLabel = () => t('内置通道');
+let exampleRequest: AbortController | null = null;
 let zoom = 1, pan = { x: 0, y: 0 }, space = false, drag: { type: 'light' | 'pan' | 'compare'; x: number; y: number } | null = null;
 let frames = 0, fpsStart = performance.now(), lastFrame = performance.now(), measuredFPS = 0;
 const status = (message: string | (() => string)) => localizedText($('status'), message);
@@ -134,7 +136,7 @@ function loadChannels(next: Channels) {
   if (next.width > max || next.height > max) throw new Error(t("图片超过显卡最大纹理尺寸 {0}。", max));
   channels = next;renderer.load(channels);zoom = 1;pan = { x: 0, y: 0 };dirty = true;
   localizedText($('asset-name'), () => next.nameKey ? t(next.nameKey) : next.name);
-  localizedText($('source-label'), () => `${next.width} × ${next.height} · ${next.source === 'demo' ? t('精确测试通道') : next.source === 'pending' ? t('待生成深度') : next.source === 'ai' ? t('AI 相对深度') : t('外部通道')}`);
+  localizedText($('source-label'), () => `${next.width} × ${next.height} · ${next.source === 'demo' ? t('精确测试通道') : next.source === 'bundled' ? t('预置 AI 深度＋法线') : next.source === 'pending' ? t('待生成深度') : next.source === 'ai' ? t('AI 相对深度') : t('外部通道')}`);
   $<HTMLFieldSetElement>('lighting-controls').disabled = next.source === 'pending';$('empty-hint').hidden = next.source !== 'pending';
   $<HTMLButtonElement>('export-normal').disabled = $<HTMLButtonElement>('export-depth').disabled = next.source === 'pending';
   sync();fit();
@@ -196,12 +198,25 @@ dragArea.onpointermove = e => {
 dragArea.onpointerup = dragArea.onpointercancel = () => { drag=null;dirty=true; };
 paper.addEventListener('wheel', e => { if (channels.source==='pending') return;e.preventDefault();selectedLight().position[2]=clamp(selectedLight().position[2]-e.deltaY*.0015,.1,4);change();sync(); },{passive:false});
 
-function stopJob() { jobId++;busy=false;if(worker){worker.terminate();worker=null;}$('progress').hidden=true;$<HTMLButtonElement>('estimate').disabled=false; }
+function stopJob() { jobId++;exampleRequest?.abort();exampleRequest=null;busy=false;if(worker){worker.terminate();worker=null;}$('progress').hidden=true;$<HTMLButtonElement>('estimate').disabled=false; }
 $('cancel-job').onclick = () => { stopJob();status(() => t('推理已取消 · 可以导入通道或重新生成')); };
+async function openExample() {
+  stopJob();const request = jobId, controller = new AbortController();exampleRequest = controller;
+  status(() => t('正在加载默认示例与预置通道…'));
+  try {
+    const next = await loadExample(controller.signal);if (request !== jobId) return;
+    settings=defaults();lights=[makeLight(1)];selected=1;animate=false;backendLabel=()=>t('预置通道 · 无需推理');
+    loadChannels(next);status(() => t('默认示例已就绪 · 深度与法线已附带，直接拖灯'));
+  } catch(error) {
+    if (request !== jobId || controller.signal.aborted) return;
+    toast(() => String(error));status(() => t('默认示例加载失败 · 可重试或使用测试场景'));
+  } finally { if(exampleRequest === controller) exampleRequest = null; }
+}
+$('example').onclick = () => void openExample();
 $('demo').onclick = () => { stopJob();settings=defaults();lights=[makeLight(1)];selected=1;animate=false;backendLabel=()=>t('内置通道');loadChannels(createDemo());status(() => t('内置精确测试通道 · 无需模型')); };
 $('open-image').onclick = () => $<HTMLInputElement>('image-file').click();
 async function openImage(file: File) {
-  const request = ++jobId;try {
+  stopJob();const request = jobId;try {
     const image=await readImage(file);if(request!==jobId)return;
     stopJob();settings=defaults();settings.view='original';animate=false;
     loadChannels({width:image.width,height:image.height,color:image.data,depth:new Float32Array(image.width*image.height),source:'pending',name:file.name});
@@ -220,6 +235,7 @@ function upsample(data:Float32Array,w:number,h:number,W:number,H:number){
 }
 async function estimate(){
   if(busy)return;const backend=$<HTMLSelectElement>('backend').value;
+  exampleRequest?.abort();exampleRequest=null;
   if(backend==='webgpu' && !(navigator as Navigator & {gpu?:unknown}).gpu){toast(() => t('当前浏览器没有 WebGPU，请选择 WASM 慢速模式。'));return;}
   busy=true;const id=++jobId;$<HTMLButtonElement>('estimate').disabled=true;$('progress').hidden=false;
   localizedText($('progress-message'), () => t('读取本地模型 · 约 99 MB'));$('progress').querySelector('progress')!.removeAttribute('value');status(() => t('正在载入深度模型，图片不会上传'));
@@ -253,7 +269,8 @@ $<HTMLInputElement>('channel-file').onchange=async e=>{
   try{
     const data=await readChannel(file,kind,original);if(channels!==original)return;stopJob();
     if(kind==='depth'){settings.autoDepthRange=true;settings.invert=false;settings.view='lit';}
-    const next={...channels,[kind]:data};if(kind==='depth')next.source='external';
+    const next={...channels,[kind]:data};if(kind==='depth') { next.source='external';if(next.normalBasis) { next.normal=undefined;next.normalBasis=undefined; } }
+    if(kind==='normal')next.normalBasis=undefined;
     // A normal map alone does not supply a shadow surface: keep pending until depth exists.
     loadChannels(next);status(() => t("已导入{0} · {1}{2}", kind==='normal'?t('法线'):kind==='depth'?t('深度'):t('影响蒙版'), file.name, next.source==='pending'?t(' · 仍需深度'):''));
   }catch(error){toast(() => String(error));}
@@ -289,5 +306,6 @@ requestAnimationFrame(frame);
 onLocaleChange(() => { language.value=getLocale();sync();fit(); });
 setLocale(getLocale());
 window.addEventListener('beforeunload',()=>{worker?.terminate();renderer.dispose();});
+void openExample();
 // Local diagnostics for reproducible QA; no remote access, persistence or source image upload.
 if(import.meta.env.DEV)(window as any).__relight={get state(){return {settings,lights,source:channels.source,busy,backend:backendLabel(),fps:measuredFPS,error:renderer.error,memory:renderer.renderer.info.memory};},setPreset:(index:number)=>{const p=preset(index);Object.assign(settings,p.settings);lights=p.lights;selected=lights[0].id;animate=p.animate;change();sync();},render:()=>{renderer.render(settings,lights,false);},exportPNG:(view:View='lit')=>renderer.exportPNG(settings,lights,view)};

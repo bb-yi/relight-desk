@@ -27,7 +27,7 @@ describe('i18n', () => {
     for (const [key, value] of Object.entries(en)) expect(slots(value), key).toEqual(slots(key));
   });
   it('covers every literal t() message in the app modules', () => {
-    for (const name of ['main','io','types','renderer','i18n']) {
+    for (const name of ['main','io','types','renderer','i18n','example']) {
       const file = ts.createSourceFile(name, readFileSync(`src/${name}.ts`, 'utf8'), ts.ScriptTarget.Latest, true);
       const visit = (n: ts.Node) => {
         if (ts.isCallExpression(n) && n.expression.getText(file) === 't' && n.arguments[0] && ts.isStringLiteral(n.arguments[0]))

@@ -4,7 +4,7 @@
 
 Local image relighting with real-time lights, depth-based self-shadows and background shadows. An independent implementation inspired by AiDeNier's video, not the original author's release. It does not regenerate your image.
 
-![Workbench with an off-image light](verification/i18n-outside-light-en.jpg)
+![Default illustration with bundled depth and normals](verification/default-example.png)
 
 ## Quick start
 
@@ -22,7 +22,15 @@ First-time setup needs internet. Later starts reuse verified models and installe
 
 ## Use
 
-Try the built-in scene. Open a PNG/JPEG/WebP, generate depth and normals, then drag lights inside or outside the image. Edit X/Y/Z for precision. Scroll over the image to adjust light height; Space+drag pans. Export PNG, normal PNG, floating-point PFM, and settings JSON. Chinese/English switching is available in the top bar.
+The default illustration ships with precomputed AI depth and normals: drag a light immediately, without inference. **Test scene** switches to the procedural fixture; **Default example** restores the illustration. Open a PNG/JPEG/WebP and generate depth to relight your own image. Edit X/Y/Z for precision; scroll for light height, Space+drag to pan. Export PNG, normal PNG, floating-point PFM and settings JSON. Chinese/English switching is available in the top bar.
+
+### Bundled example
+
+`public/example/` includes the byte-identical 2071×3021 original, an uncropped 1053×1536 display copy, RGB camera-space `normal.png`, and normalized little-endian top-down Float32 `depth.f32`. The 8-bit depth PNG is a preview only. Depth was baked locally with Depth Anything V2 Small FP32; normals were derived from its edge-smoothed height field. Changing surface settings regenerates normals from float depth without rerunning AI. These are estimates, not ground-truth geometry.
+
+Opening the example does not request model weights. Use `npm start -- --demo-only` to skip downloading weights as well. Other images still require the model or imported passes. The manifest records hashes and bake settings. Maintainers can regenerate with `node scripts/bake-example.mjs "source.png"` after preparing the local model.
+
+The illustration was supplied by the project maintainer; no new artwork license is granted by its inclusion. Check the original rights holder's permission before redistribution or commercial use. See [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Model management
 
@@ -36,7 +44,7 @@ npm run models:download
 npm start -- --demo-only
 ```
 
-`RELIGHT_MODEL_DIR` is also supported; the CLI option wins. Files are pinned to a revision and SHA-256 hashes in `model-manifest.json`. Valid files are reused without a download request; incomplete files restart from scratch. Invalid files are preserved as `.invalid-*` backups before replacement. Standard HTTP_PROXY/HTTPS_PROXY variables are supported. Weights and user images are not committed to Git.
+`RELIGHT_MODEL_DIR` is also supported; the CLI option wins. Files are pinned to a revision and SHA-256 hashes in `model-manifest.json`. Valid files are reused without a download request; incomplete files restart from scratch. Invalid files are preserved as `.invalid-*` backups before replacement. Standard HTTP_PROXY/HTTPS_PROXY variables are supported. Weights and images opened in the app are not committed to Git; the bundled example is explicitly distributed with the repository.
 
 Depth Anything V2 Small FP32 estimates relative depth. Normals are derived using GPU shaders, without a second model. Clearing browser data does not remove disk files. Older browser caches are neither migrated nor deleted.
 

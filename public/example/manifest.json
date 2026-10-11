@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "width": 1053,
+  "height": 1536,
+  "originalWidth": 2071,
+  "originalHeight": 3021,
+  "sourceFilename": "142171035_p0.png",
+  "model": "onnx-community/depth-anything-v2-small",
+  "revision": "4472b7362082ad9968fee890ca0f1e5aca36b93d",
+  "backend": "onnxruntime-node/cpu",
+  "dtype": "fp32",
+  "depthEncoding": "float32-le/top-down/normalized-near-one",
+  "normalEncoding": "RGB*2-1; X-right Y-up Z-viewer",
+  "normalBasis": {
+    "height": 0.65,
+    "smooth": 1,
+    "lineAssist": true
+  },
+  "files": {
+    "original.png": {
+      "bytes": 5365715,
+      "sha256": "b6d19a0e22c372c7b6b681f2a1fd3e008c6a2091474da0093ed81d46faff4e22"
+    },
+    "color.png": {
+      "bytes": 2612302,
+      "sha256": "b6d9accfef044724d4029cecd0c42bf208e3797f15599805af373d7a84981aaf"
+    },
+    "depth.f32": {
+      "bytes": 6469632,
+      "sha256": "b8c73670ca2d1e5518ee54737aa49c867991cf166c639a05cda864373bdc54cd"
+    },
+    "depth-preview.png": {
+      "bytes": 232190,
+      "sha256": "e8f2b64d3b74809ba632a3af32fbd12012bbafae33361a72fa4bee554322dfa1"
+    },
+    "normal.png": {
+      "bytes": 2620279,
+      "sha256": "c6f8553e86160b65d4c6e099acb03c1836386a60ffba5897050973f957840774"
+    }
+  }
+}

@@ -1,5 +1,14 @@
 // Chinese source strings are stable message IDs. Keep placeholders identical.
 export const en: Record<string, string> = {
+  '默认示例': 'Default example', '测试场景': 'Test scene',
+  '预置 AI 深度＋法线': 'Bundled AI depth + normals', '预置通道 · 无需推理': 'Bundled passes · No inference',
+  '正在加载默认示例与预置通道…': 'Loading default example and bundled passes…',
+  '默认示例已就绪 · 深度与法线已附带，直接拖灯': 'Example ready · Depth and normals included; drag a light',
+  '默认示例加载失败 · 可重试或使用测试场景': 'Example failed to load · Retry or use the test scene',
+  '示例深度文件尺寸不匹配。': 'Example depth file size mismatch.',
+  '示例深度包含无效数值。': 'Example depth contains invalid values.',
+  '示例图片尺寸不匹配。': 'Example image size mismatch.',
+  '示例文件加载失败：{0}（HTTP {1}）': 'Example file failed to load: {0} (HTTP {1})',
   '本地模型文件缺失，请在项目目录运行 npm start 准备模型，或检查 --model-dir 路径。': 'Local model file is missing. Run npm start in the project folder, or check your --model-dir path.',
   '灯光位置': 'Light position', '位置 X': 'Position X', '位置 Y': 'Position Y', '位置 Z': 'Position Z',
   '位置 {0} 必须在 {1} 到 {2} 之间。': 'Position {0} must be between {1} and {2}.',
